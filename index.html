@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f4f0e8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="My Reading" />
+  <title>My Reading</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="masthead">
+      <button class="wordmark" data-view="home" aria-label="Go home">MY READING</button>
+      <div class="issue-date" id="issueDate"></div>
+      <button class="icon-btn" id="openImport" aria-label="Add article">＋</button>
+    </header>
+
+    <main id="app"></main>
+
+    <nav class="bottom-nav" aria-label="Primary">
+      <button data-view="home" class="nav-item active"><span>Today</span></button>
+      <button data-view="library" class="nav-item"><span>Library</span></button>
+      <button data-view="words" class="nav-item"><span>Words</span></button>
+      <button data-view="saved" class="nav-item"><span>Saved</span></button>
+    </nav>
+  </div>
+
+  <dialog id="importDialog" class="sheet">
+    <form method="dialog" class="sheet-inner" id="importForm">
+      <div class="sheet-head">
+        <div>
+          <div class="eyebrow">ADD NEW ARTICLE</div>
+          <h2>Paste from ChatGPT</h2>
+        </div>
+        <button value="cancel" class="icon-btn">×</button>
+      </div>
+      <p class="muted">Paste the full article in the agreed format. Title, date, category, article and vocabulary will be separated automatically.</p>
+      <textarea id="articlePaste" placeholder="DATE: 2026-08-10\nCATEGORY: Forest & Ecology\nTITLE: ...\n\nARTICLE:\n...\n\nVOCABULARY:\n1. ..."></textarea>
+      <div class="sheet-actions">
+        <button type="button" class="text-btn" id="loadExample">Load example</button>
+        <button type="submit" class="primary-btn">Import article</button>
+      </div>
+      <p id="importError" class="error" role="alert"></p>
+    </form>
+  </dialog>
+
+  <dialog id="wordDialog" class="sheet compact-sheet">
+    <form method="dialog" class="sheet-inner">
+      <div class="sheet-head">
+        <div>
+          <div class="eyebrow">SAVE WORD</div>
+          <h2 id="selectedWordTitle">Selected word</h2>
+        </div>
+        <button value="cancel" class="icon-btn">×</button>
+      </div>
+      <label>Meaning in Korean<input id="wordMeaning" autocomplete="off" /></label>
+      <label>Example or note<textarea id="wordNote" rows="3"></textarea></label>
+      <button type="button" class="primary-btn full" id="saveWordBtn">Save to Words</button>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
