@@ -279,6 +279,38 @@ function lookupWord(a, word){
   return null;
 }
 
+async function translateWordToKorean(word){
+  const target = normalizeWord(word);
+
+  if(!target) return '';
+
+  try{
+    const url =
+      'https://api.mymemory.translated.net/get?q=' +
+      encodeURIComponent(target) +
+      '&langpair=en|ko';
+
+    const response = await fetch(url);
+
+    if(!response.ok){
+      throw new Error('Translation request failed');
+    }
+
+    const data = await response.json();
+
+    const translated =
+      data?.responseData?.translatedText?.trim() || '';
+
+    if(!translated) return '';
+
+    return translated;
+
+  }catch(err){
+    console.warn('Translation lookup failed:', err);
+    return '';
+  }
+}
+
 function sentenceForWord(body, word){
   const clean = normalizeWord(word);
 
@@ -581,13 +613,14 @@ function renderArticle(){
   });
 }
 
-function openWordCard(a, text){
+async function openWordCard(a, text){
   if(!text) return;
 
   const hit = lookupWord(a, text);
   const contextSentence = sentenceForWord(a.body, text);
 
-  const meaning = hit?.meaning || '';
+  let meaning = hit?.meaning || '';
+
   const example =
     contextSentence ||
     hit?.example ||
@@ -600,18 +633,39 @@ function openWordCard(a, text){
   $('#wordMeaning').placeholder =
     meaning
       ? ''
-      : 'Meaning not included in this article';
+      : 'Looking up Korean meaning...';
 
   $('#wordNote').value = example;
 
   $('#wordNote').placeholder =
     'Example from the article';
 
+  $('#wordDialog').showModal();
+
+  // 기사 안에 뜻이 없을 때만 무료 번역 조회
+  if(!meaning){
+    const translated = await translateWordToKorean(text);
+
+    // 팝업이 아직 열려 있고,
+    // 사용자가 직접 뜻을 입력하지 않았을 때만 채움
+    if(
+      $('#wordDialog').open &&
+      !$('#wordMeaning').value.trim()
+    ){
+      if(translated){
+        $('#wordMeaning').value = translated;
+        $('#wordMeaning').placeholder = '';
+      }else{
+        $('#wordMeaning').placeholder =
+          'Korean meaning could not be loaded';
+      }
+    }
+  }
+
   $('#saveWordBtn').onclick=()=>{
     const all = words();
     const normalized = normalizeWord(text);
 
-    // Avoid accidental duplicates from repeated taps.
     const existing = all.find(w=>
       normalizeWord(w.word)===normalized &&
       w.articleId===a.id
@@ -647,8 +701,6 @@ function openWordCard(a, text){
 
     window.getSelection()?.removeAllRanges();
   };
-
-  $('#wordDialog').showModal();
 }
 
 function saveSelectedSentence(a){
