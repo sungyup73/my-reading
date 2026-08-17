@@ -216,22 +216,67 @@ function normalizeWord(s=''){
 function lookupWord(a, word){
   const target = normalizeWord(word);
 
-  const pool = [
-    ...(a.wordData || []),
-    ...(a.vocabulary || [])
-  ];
+  const wordData = a.wordData || [];
+  const vocabulary = a.vocabulary || [];
 
-  // Exact single-word match first.
-  let found = pool.find(v=>normalizeWord(v.word)===target);
+  // 1. WORD DATA에서 먼저 찾기
+  let found = wordData.find(v =>
+    normalizeWord(v.word) === target
+  );
 
-  // Light fallback for common plural / -s forms.
-  if(!found && target.endsWith('s')){
-    found = pool.find(
-      v=>normalizeWord(v.word)===target.slice(0,-1)
+  if(found && found.meaning){
+    return found;
+  }
+
+  // 2. 현재 정상 형식의 VOCABULARY에서 찾기
+  let index = vocabulary.findIndex(v =>
+    normalizeWord(v.word) === target
+  );
+
+  // 복수형 -s 간단 처리
+  if(index === -1 && target.endsWith('s')){
+    const singular = target.slice(0, -1);
+
+    index = vocabulary.findIndex(v =>
+      normalizeWord(v.word) === singular
     );
   }
 
-  return found || null;
+  if(index !== -1){
+    const item = vocabulary[index];
+
+    // 정상적으로 저장된 새 형식
+    if(item.meaning){
+      return item;
+    }
+
+    // 예전 버전에서
+    // word / meaning / example이 각각 별도 항목으로
+    // 저장된 경우 자동 복구
+    const nextMeaning = vocabulary[index + 1]?.word || '';
+    const nextExample = vocabulary[index + 2]?.word || '';
+
+    return {
+      word: item.word,
+      meaning: nextMeaning,
+      example: nextExample
+    };
+  }
+
+  // 3. WORD DATA에서도 복수형 검색
+  if(target.endsWith('s')){
+    const singular = target.slice(0, -1);
+
+    found = wordData.find(v =>
+      normalizeWord(v.word) === singular
+    );
+
+    if(found){
+      return found;
+    }
+  }
+
+  return null;
 }
 
 function sentenceForWord(body, word){
